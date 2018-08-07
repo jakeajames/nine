@@ -11,6 +11,8 @@ static BOOL enableIconRemove;
 static BOOL enableColorCube;
 static BOOL enableBannerSection;
 
+static BOOL findLockGlyph = true;
+
 BOOL isOnLockscreen() {
     long count = [[[%c(SBFPasscodeLockTrackerForPreventLockAssertions) sharedInstance] valueForKey:@"_assertions"] count];
     if (count == 0) return YES; // array is empty
@@ -21,8 +23,8 @@ BOOL isOnLockscreen() {
     else return NO;
 }
 
-static id _instance;
-static id _lockGlyph;
+static id _instance = nil;
+static id _lockGlyph = nil;
 static id _envWindow = nil;
 
 %hook SBFPasscodeLockTrackerForPreventLockAssertions
@@ -77,6 +79,7 @@ static id _envWindow = nil;
         if (_lockGlyph) ((UIView*)_lockGlyph).hidden = NO;
         if (_envWindow) ((UIWindow*)_envWindow).hidden = YES;
     }
+    if (!_lockGlyph) findLockGlyph = false;
 }
 %end
 
@@ -92,7 +95,7 @@ static id _envWindow = nil;
 %hook PKFingerprintGlyphView
 // keep an instance of lockglpyh and hide it later in a method that gets called when it shows
 -(id)init {
-    if (!_lockGlyph) {
+    if (!_lockGlyph && findLockGlyph) {
         _lockGlyph = %orig;
         return _lockGlyph;
     }
